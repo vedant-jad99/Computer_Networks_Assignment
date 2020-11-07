@@ -14,26 +14,28 @@ except socket.error as e:
     print(e)
 
 def Send():
-    cmd = input()
-    sock.send(str.encode(cmd))
-    if cmd == "quit()":
-        os._exit(1)
+    while True:
+        cmd = input()
+        sock.send(str.encode(cmd))
+        if cmd == "quit()":
+            os._exit(1)
         
 def Receive():
-    string = sock.recv(102400)
-    string = string.decode("utf-8")
-    if string == "quit()":
-        os._exit(1)
+    while True:
+        string = sock.recv(102400)
+        string = string.decode("utf-8")
+        if string == "quit()":
+            sock.send(str.encode(string))
+            sock.close()
+            os._exit(1)
 
-    if string != "\n":
-        print("\nReceived : ", string, "\n")
+        if string != "\n":
+            print("\nReceived : ", string, "\n")
 
 if __name__ == "__main__":
-    while True:
-        th1 = threading.Thread(target=Send)
-        th2 = threading.Thread(target=Receive)
+    th1 = threading.Thread(target=Send)
+    th2 = threading.Thread(target=Receive)
+    th1.start()
+    th2.start()
 
-        th1.start()
-        th2.start()
-
-        th1.join()
+    th1.join()
