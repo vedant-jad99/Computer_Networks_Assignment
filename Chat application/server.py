@@ -1,19 +1,19 @@
-#Chat application
+#Chat Application
 
 import socket
 import time
 import threading
+import os
 
-PORT = 8080
-HOST = "192.168.0.105"
+PORT = 9009
+HOST = '192.168.0.104'
 sock = None
-conn_list = []
-client_count = 1
+loopExit = True
 
 def Create():
     try:
         global sock
-        sock = socket.socket()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     except:
         print("Error creating socket")
 
@@ -28,39 +28,40 @@ def Bind():
         Bind()
     
 def Listen():
-    global conn_list, client_count
-    while True:
-        try:
-            conn, addr = sock.accept()
-            if conn != None:
-                print("Connection to client successful.")
-                conn_list.append((conn, addr, client_count))
-                client_count += 1
-                thread = threading.Thread(target=AcceptMessages, args=(conn, ))
-                thread.start()
-        except socket.error as e:
-            print(e)
+    try:
+        conn, addr = sock.accept()
+        if conn != None:
+            print("Connection to server successful.\n")
+        
+        th1 = threading.Thread(target=Receive, args=(conn, ))
+        th2 = threading.Thread(target=Send, args=(conn, ))
+        th1.start()
+        th2.start()
 
-def SendToClient(conn):
-    global conn_list
-    for i in conn_list:
-        message = str(i[2]) + " : " + str(i[1]) + "\n"
-        conn.send(str.encode(message))
-    conn.send(str.encode('over'))
+        th1.join()
+   
+    except socket.error as e:
+        print(e)
 
-def AcceptMessages(conn):
+def Send(conn):
     while True:
-        message = conn.recv(1024)
-        message = message.decode("utf-8")
-        if message == 'list()':
-            SendToClient(conn)
-        elif message == 'quit()':
-            i = conn_list.index(conn)
-            conn_list.remove(i)
-            print(conn_list)
+        cmd = input()
+        conn.send(str.encode(cmd))
+        if cmd == "quit()":
+            time.sleep(1)
+            os._exit(1)
+
+def Receive(conn):
+    while True:
+        string = conn.recv(102400)
+        string = string.decode("utf-8")
+        print("\nReceived : ", string, "\n")
+        if(string == 'quit()'):
+            conn.send(str.encode(string))
+            print("Exiting...")
             conn.close()
-            break
-
+            time.sleep(1)
+            os._exit(1)
 
 if __name__ == '__main__':
     Create()
