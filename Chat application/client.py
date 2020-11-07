@@ -1,30 +1,39 @@
-#Program to capitalise the string
+#Program for a chat application
 
 import socket
-import sys
+import os
+import threading
 
-HOST = '192.168.0.105'
-PORT = 8080
+HOST = '192.168.0.104'
+PORT = 9009
 
 sock = socket.socket()
 try:
     sock.connect((HOST, PORT))
-    print("List of viable commands is: list(), select(), quit().")
 except socket.error as e:
     print(e)
 
-commands = ['select()', 'list()', 'quit()']
-
-while True:
+def Send():
     cmd = input()
-    if cmd in commands:
-        sock.send(str.encode(cmd))
-        if cmd == 'list()':
-            while True:
-                recv = sock.recv(1024)
-                recv = recv.decode("utf-8")
-                if 'over' in recv:
-                    break
-                print(recv)
-        elif cmd == 'quit()':
-            break
+    sock.send(str.encode(cmd))
+    if cmd == "quit()":
+        os._exit(1)
+        
+def Receive():
+    string = sock.recv(102400)
+    string = string.decode("utf-8")
+    if string == "quit()":
+        os._exit(1)
+
+    if string != "\n":
+        print("\nReceived : ", string, "\n")
+
+if __name__ == "__main__":
+    while True:
+        th1 = threading.Thread(target=Send)
+        th2 = threading.Thread(target=Receive)
+
+        th1.start()
+        th2.start()
+
+        th1.join()
