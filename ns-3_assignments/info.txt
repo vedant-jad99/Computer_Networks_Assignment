@@ -1,0 +1,1 @@
+This folder contains all the ns-3 assignments for the course CS303.
